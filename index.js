@@ -13,6 +13,7 @@ const port = 3000;
 const saltRounds = 10;
 env.config();
 
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -57,13 +58,22 @@ app.get("/logout", (req, res) => {
   });
 });
 
-app.get("/secrets", (req, res) => {
+app.get("/secrets", async (req, res) => {
   if (req.isAuthenticated()) {
-    res.render("secrets.ejs");
+    try {
+      const result = await db.query("SELECT * from users where email = $1",[req.user.email])
+      res.render("secrets.ejs",result.rows[0])
+    } catch (error) {
+      
+    }
   } else {
     res.redirect("/login");
   }
 });
+
+app.get("/submit",(req,res)=>{
+  res.render("submit.ejs")
+})
 
 app.get(
   "/auth/google",
@@ -85,7 +95,15 @@ app.post(
     failureRedirect: "/login",
   })
 );
-
+app.post("/submit",async (req,res)=>{
+  const secret = req.body.secret
+  try {
+    await db.query("UPDATE users set secret = ($1) where email = ($2)",[secret,req.user.email])
+    res.redirect("/secrets");
+  } catch (err) {
+    res.send(err)
+  }
+})
 app.post("/register", async (req, res) => {
   const email = req.body.username;
   const password = req.body.password;
