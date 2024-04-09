@@ -72,7 +72,10 @@ app.get("/secrets", async (req, res) => {
 });
 
 app.get("/submit",(req,res)=>{
-  res.render("submit.ejs")
+  if(req.isAuthenticated()) res.render("submit.ejs")
+  else{
+    res.redirect("/login")
+  }
 })
 
 app.get(
